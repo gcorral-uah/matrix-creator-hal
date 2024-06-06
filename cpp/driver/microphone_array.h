@@ -36,7 +36,7 @@ static const uint32_t MIC_sampling_frequencies[][3] = {
 class MicrophoneArray : public MatrixDriver {
 public:
   MicrophoneArray(bool enable_beamforming = true,
-                  size_t samples_per_buffer = 512);
+                  size_t samples_per_buffer = 64);
 
   ~MicrophoneArray();
 
@@ -83,7 +83,7 @@ private:
   uint32_t sampling_frequency_;
   bool enable_beamforming_;
 
-  const uint16_t kMicarrayBufferSize{64 * 8};
+  const uint16_t kMicarrayBufferSize{8 * 8};
   const uint16_t kMicrophoneArrayIRQ{22}; // GPIO06 - WiringPi:22
   const uint16_t kMicrophoneChannels{8};
 
