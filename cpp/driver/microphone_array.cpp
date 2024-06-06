@@ -75,8 +75,8 @@ bool MicrophoneArray::Read() {
   if (!bus_)
     return false;
 
-  // HACK: This is not thread-safe now.
-  // irq_cv.wait(lock_);
+  // TODO: Cleanup this cv/mutex, it's adding a 3 ms delay....
+  irq_cv.wait(lock_);
 
   auto start_time = std::chrono::high_resolution_clock::now();
   if (!bus_->Read(kMicrophoneArrayBaseAddress,
