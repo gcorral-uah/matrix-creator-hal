@@ -42,7 +42,7 @@ MicrophoneArray::MicrophoneArray(bool enable_beamforming,
                                  size_t samples_per_buffer)
     : lock_(irq_m), gain_(3), sampling_frequency_(16000),
       enable_beamforming_(enable_beamforming) {
-  kMicarrayBufferSize = samples_per_buffer * kMicrophoneChannels;
+  // kMicarrayBufferSize = samples_per_buffer * kMicrophoneChannels;
   raw_data_.resize(kMicarrayBufferSize);
 
   if (enable_beamforming_) {
