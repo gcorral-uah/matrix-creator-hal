@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <wiringPi.h>
 #include <cmath>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 #include <valarray>
+#include <wiringPi.h>
 
 #include "cpp/driver/creator_memory_map.h"
 #include "cpp/driver/microphone_array.h"
@@ -37,12 +38,14 @@ void irq_callback(void) { irq_cv.notify_all(); }
 
 namespace matrix_hal {
 
-MicrophoneArray::MicrophoneArray(bool enable_beamforming)
-    : lock_(irq_m), gain_(3), sampling_frequency_(16000), enable_beamforming_(enable_beamforming) {
+MicrophoneArray::MicrophoneArray(bool enable_beamforming,
+                                 size_t samples_per_buffer)
+    : lock_(irq_m), gain_(3), sampling_frequency_(16000),
+      enable_beamforming_(enable_beamforming) {
+  kMicarrayBufferSize = samples_per_buffer * kMicrophoneChannels;
   raw_data_.resize(kMicarrayBufferSize);
 
-  if (enable_beamforming_)
-  {
+  if (enable_beamforming_) {
     delayed_data_.resize(kMicarrayBufferSize);
 
     fifos_.resize(kMicrophoneChannels);
@@ -69,7 +72,8 @@ void MicrophoneArray::Setup(MatrixIOBus *bus) {
 //  Read audio from the FPGA and calculate beam using delay & sum method
 bool MicrophoneArray::Read() {
   // TODO(andres.calderon@admobilize.com): avoid double buffer
-  if (!bus_) return false;
+  if (!bus_)
+    return false;
 
   irq_cv.wait(lock_);
 
@@ -79,8 +83,7 @@ bool MicrophoneArray::Read() {
     return false;
   }
 
-  if (enable_beamforming_)
-  {
+  if (enable_beamforming_) {
     for (uint32_t s = 0; s < NumberOfSamples(); s++) {
       int sum = 0;
       for (int c = 0; c < kMicrophoneChannels; c++) {
@@ -142,7 +145,8 @@ void MicrophoneArray::CalculateDelays(float azimutal_angle, float polar_angle,
 }
 
 bool MicrophoneArray::GetGain() {
-  if (!bus_) return false;
+  if (!bus_)
+    return false;
   uint16_t value;
   bus_->Read(kConfBaseAddress + 0x07, &value);
   gain_ = value;
@@ -150,7 +154,8 @@ bool MicrophoneArray::GetGain() {
 }
 
 bool MicrophoneArray::SetGain(uint16_t gain) {
-  if (!bus_) return false;
+  if (!bus_)
+    return false;
   bus_->Write(kConfBaseAddress + 0x07, gain);
   gain_ = gain;
   return true;
@@ -185,12 +190,14 @@ bool MicrophoneArray::SetSamplingRate(uint32_t sampling_frequency) {
 }
 
 bool MicrophoneArray::GetSamplingRate() {
-  if (!bus_) return false;
+  if (!bus_)
+    return false;
   uint16_t value;
   bus_->Read(kConfBaseAddress + 0x06, &value);
 
   for (int i = 0;; i++) {
-    if (MIC_sampling_frequencies[i][0] == 0) return false;
+    if (MIC_sampling_frequencies[i][0] == 0)
+      return false;
     if (value == MIC_sampling_frequencies[i][0]) {
       sampling_frequency_ = MIC_sampling_frequencies[i][0];
       break;
@@ -210,4 +217,4 @@ void MicrophoneArray::ShowConfiguration() {
   std::cout << "Sampling Frequency: " << sampling_frequency_ << std::endl;
   std::cout << "Gain : " << gain_ << std::endl;
 }
-};  // namespace matrix_hal
+}; // namespace matrix_hal
