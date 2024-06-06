@@ -20,14 +20,14 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <iostream>
 #include <linux/types.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <iostream>
-#include <string>
 
 namespace matrix_hal {
 
@@ -37,10 +37,12 @@ namespace matrix_hal {
 BusKernel::BusKernel() : regmap_fd_(0) {}
 
 BusKernel::~BusKernel() {
-  if (regmap_fd_) Close();
+  if (regmap_fd_)
+    Close();
 }
 bool BusKernel::Init(std::string device_name) {
-  if (regmap_fd_) Close();
+  if (regmap_fd_)
+    Close();
 
   if (device_name.size() == 0)
     device_name_ = "/dev/matrixio_regmap";
@@ -70,6 +72,7 @@ bool BusKernel::Read(uint16_t add, unsigned char *data, int length) {
   }
 
   memcpy(data, &buffer[2], length);
+  std::cerr << "Reading " << length << " bytes from SPI" << std::endl;
 
   return true;
 }
@@ -87,8 +90,9 @@ bool BusKernel::Write(uint16_t add, unsigned char *data, int length) {
   if (ioctl(regmap_fd_, WR_VALUE, tx_buffer_)) {
     return false;
   }
+  std::cerr << "Writing " << length << " bytes to SPI" << std::endl;
   return true;
 }
 
 void BusKernel::Close(void) { close(regmap_fd_); }
-};  // namespace matrix_hal
+}; // namespace matrix_hal
