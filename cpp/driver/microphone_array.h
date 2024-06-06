@@ -35,7 +35,7 @@ static const uint32_t MIC_sampling_frequencies[][3] = {
 
 class MicrophoneArray : public MatrixDriver {
 public:
-  MicrophoneArray(bool enable_beamforming = true,
+  MicrophoneArray(bool enable_beamforming = false,
                   size_t samples_per_buffer = 64);
 
   ~MicrophoneArray();
