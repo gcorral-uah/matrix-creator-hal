@@ -75,7 +75,8 @@ bool MicrophoneArray::Read() {
   if (!bus_)
     return false;
 
-  irq_cv.wait(lock_);
+  // HACK: This is not thread-safe now.
+  // irq_cv.wait(lock_);
 
   auto start_time = std::chrono::high_resolution_clock::now();
   if (!bus_->Read(kMicrophoneArrayBaseAddress,
