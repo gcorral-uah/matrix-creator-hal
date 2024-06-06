@@ -77,15 +77,19 @@ bool MicrophoneArray::Read() {
 
   irq_cv.wait(lock_);
 
-  std::cerr << "In READ reading" << sizeof(int16_t) * kMicarrayBufferSize
-            << " bytes" << "to a buffer of size" << raw_data_.size()
-            << std::endl;
-
+  auto start_time = std::chrono::high_resolution_clock::now();
   if (!bus_->Read(kMicrophoneArrayBaseAddress,
                   reinterpret_cast<unsigned char *>(&raw_data_[0]),
                   sizeof(int16_t) * kMicarrayBufferSize)) {
     return false;
   }
+  auto stop_time = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> dif_time = stop_time - start_time;
+  auto delta_t = static_cast<float>(dif_time.count());
+
+  std::cerr << "In READ reading " << sizeof(int16_t) * kMicarrayBufferSize
+            << " bytes " << " to a buffer of int_16_t with size "
+            << raw_data_.size() << " took " << delta_t << "ms" << std::endl;
 
   if (enable_beamforming_) {
     for (uint32_t s = 0; s < NumberOfSamples(); s++) {
