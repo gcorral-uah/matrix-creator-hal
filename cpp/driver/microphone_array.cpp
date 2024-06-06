@@ -77,6 +77,10 @@ bool MicrophoneArray::Read() {
 
   irq_cv.wait(lock_);
 
+  std::cerr << "In READ reading" << sizeof(int16_t) * kMicarrayBufferSize
+            << " bytes" << "to a buffer of size" << raw_data_.size()
+            << std::endl;
+
   if (!bus_->Read(kMicrophoneArrayBaseAddress,
                   reinterpret_cast<unsigned char *>(&raw_data_[0]),
                   sizeof(int16_t) * kMicarrayBufferSize)) {
