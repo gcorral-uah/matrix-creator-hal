@@ -38,8 +38,8 @@ public:
 
 protected:
   std::string device_name_;
-  unsigned char rx_buffer_[4096];
-  unsigned char tx_buffer_[4096];
+  unsigned char rx_buffer_[12288];
+  unsigned char tx_buffer_[12288];
   mutable std::mutex mutex_;
 };
 }; // namespace matrix_hal
