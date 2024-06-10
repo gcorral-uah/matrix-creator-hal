@@ -58,7 +58,7 @@ public:
     if (use_read_cv_) {
       return kMicarrayBufferSize / kMicrophoneChannels;
     } else {
-      return num_samples_read_;
+      return std::lround(std::floor(num_samples_read_ / kMicrophoneChannels));
     }
   }
 

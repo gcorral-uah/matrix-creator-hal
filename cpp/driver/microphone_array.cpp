@@ -92,36 +92,36 @@ size_t MicrophoneArray::Read() {
   auto stop_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::nano> dif_time = stop_time - start_time;
   auto delta_t = static_cast<double>(dif_time.count());
-  auto num_samples_read =
+  auto num_samples_read_all_mics =
       std::lround(std::floor(delta_t * 10e-9 * sampling_frequency_));
   assert(num_samples_read >= 0);
   // Ensure that all the channels have new samples.
   // TODO: This can be done without a loop with a mod operation, but right now
   // this is simpler. This makes at most 7 iterations.
-  while ((num_samples_read % kMicrophoneChannels) != 0) {
-    num_samples_read--;
+  while ((num_samples_read_all_mics % kMicrophoneChannels) != 0) {
+    num_samples_read_all_mics--;
   }
-  this->num_samples_read_ = num_samples_read;
+  num_samples_read_ = num_samples_read_all_mics;
 
   auto first_sample = last_read_sample_;
-  last_read_sample_ =
-      (last_read_sample_ + num_samples_read) % number_of_samples_internal();
+  last_read_sample_ = (last_read_sample_ + num_samples_read_all_mics) %
+                      number_of_samples_internal();
 
   if (!use_read_cv_) {
     // If we don't wait for the condition variable we can read any number of
     // samples between 0 and NumberOfSamples() (This is including all the
     // microphones).
-    if (num_samples_read >= kMicarrayBufferSize) {
+    if (num_samples_read_all_mics >= kMicarrayBufferSize) {
       // If we have read more samples than the maximum buffer size return the
       // whole buffer.
       read_samples_ = raw_data_;
-      num_samples_read = kMicarrayBufferSize;
-    } else if (num_samples_read == 0) {
+      num_samples_read_all_mics = kMicarrayBufferSize;
+    } else if (num_samples_read_all_mics == 0) {
       // If we haven't read anything return an empty array.
       read_samples_ = std::valarray<int16_t>{};
     } else {
       // In all other cases return an array with the new samples.
-      read_samples_.resize(num_samples_read);
+      read_samples_.resize(num_samples_read_all_mics);
       size_t j = 0;
       for (size_t i = first_sample; i <= last_read_sample_;
            i = ((i + 1) % number_of_samples_internal())) {
@@ -152,11 +152,7 @@ size_t MicrophoneArray::Read() {
       beamformed_[s] = std::min(INT16_MAX, std::max(sum, INT16_MIN));
     }
   }
-  if (use_read_cv_) {
-    return NumberOfSamples();
-  } else {
-    return num_samples_read;
-  }
+  return NumberOfSamples();
 }
 
 // Setting fifos for the 'delay & sum' algorithm
