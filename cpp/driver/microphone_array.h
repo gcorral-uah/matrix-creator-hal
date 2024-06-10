@@ -18,6 +18,8 @@
 #ifndef CPP_DRIVER_MICROPHONE_ARRAY_H_
 #define CPP_DRIVER_MICROPHONE_ARRAY_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <valarray>
@@ -36,12 +38,13 @@ static const uint32_t MIC_sampling_frequencies[][3] = {
 class MicrophoneArray : public MatrixDriver {
 public:
   MicrophoneArray(bool enable_beamforming = false,
-                  size_t samples_per_buffer = 64);
+                  size_t samples_per_buffer = 512,
+                  bool wait_for_buffer_full_before_reading = true);
 
   ~MicrophoneArray();
 
   void Setup(MatrixIOBus *bus);
-  bool Read();
+  size_t Read();
   uint32_t SamplingRate() { return sampling_frequency_; }
   uint16_t Gain() { return gain_; }
   bool SetSamplingRate(uint32_t sampling_frequency);
@@ -52,11 +55,19 @@ public:
   void ShowConfiguration();
   uint16_t Channels() { return kMicrophoneChannels; }
   uint32_t NumberOfSamples() {
-    return kMicarrayBufferSize / kMicrophoneChannels;
+    if (use_read_cv_) {
+      return kMicarrayBufferSize / kMicrophoneChannels;
+    } else {
+      return num_samples_read_;
+    }
   }
 
   int16_t &Raw(int16_t sample, int16_t channel) {
-    return raw_data_[channel * NumberOfSamples() + sample];
+    if (use_read_cv_) {
+      return raw_data_[channel * number_of_samples_internal() + sample];
+    } else {
+      return read_samples_[sample * kMicrophoneChannels + channel];
+    }
   }
 
   int16_t &At(int16_t sample, int16_t channel) {
@@ -82,6 +93,10 @@ private:
   int16_t gain_;
   uint32_t sampling_frequency_;
   bool enable_beamforming_;
+  bool use_read_cv_;
+  size_t last_read_sample_{0};
+  std::valarray<int16_t> read_samples_{};
+  uint32_t num_samples_read_;
 
   uint16_t kMicarrayBufferSize{512 * 8};
   const uint16_t kMicrophoneArrayIRQ{22}; // GPIO06 - WiringPi:22

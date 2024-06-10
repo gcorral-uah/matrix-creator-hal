@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cassert>
 #include <cmath>
 #include <condition_variable>
 #include <cstddef>
@@ -22,6 +23,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <valarray>
@@ -39,10 +41,11 @@ void irq_callback(void) { irq_cv.notify_all(); }
 namespace matrix_hal {
 
 MicrophoneArray::MicrophoneArray(bool enable_beamforming,
-                                 size_t samples_per_buffer)
+                                 size_t samples_per_buffer,
+                                 bool wait_for_buffer_full_before_reading)
     : lock_(irq_m), gain_(3), sampling_frequency_(16000),
-      enable_beamforming_(enable_beamforming) {
-  // kMicarrayBufferSize = samples_per_buffer * kMicrophoneChannels;
+      enable_beamforming_(enable_beamforming),
+      use_read_cv_{wait_for_buffer_full_before_reading} {
   kMicarrayBufferSize = samples_per_buffer * kMicrophoneChannels;
   raw_data_.resize(kMicarrayBufferSize);
 
@@ -71,23 +74,64 @@ void MicrophoneArray::Setup(MatrixIOBus *bus) {
 }
 
 //  Read audio from the FPGA and calculate beam using delay & sum method
-bool MicrophoneArray::Read() {
+size_t MicrophoneArray::Read() {
   // TODO(andres.calderon@admobilize.com): avoid double buffer
   if (!bus_)
-    return false;
+    return 0;
 
-  // TODO: Cleanup this cv/mutex, it's adding a 3 ms delay....
-  irq_cv.wait(lock_);
+  if (use_read_cv_) {
+    irq_cv.wait(lock_);
+  }
 
   auto start_time = std::chrono::high_resolution_clock::now();
   if (!bus_->Read(kMicrophoneArrayBaseAddress,
                   reinterpret_cast<unsigned char *>(&raw_data_[0]),
                   sizeof(int16_t) * kMicarrayBufferSize)) {
-    return false;
+    return 0;
   }
   auto stop_time = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> dif_time = stop_time - start_time;
-  auto delta_t = static_cast<float>(dif_time.count());
+  std::chrono::duration<double, std::nano> dif_time = stop_time - start_time;
+  auto delta_t = static_cast<double>(dif_time.count());
+  auto num_samples_read =
+      std::lround(std::floor(delta_t * 10e-9 * sampling_frequency_));
+  assert(num_samples_read >= 0);
+  // Ensure that all the channels have new samples.
+  // TODO: This can be done without a loop with a mod operation, but right now
+  // this is simpler. This makes at most 7 iterations.
+  while ((num_samples_read % kMicrophoneChannels) != 0) {
+    num_samples_read--;
+  }
+  this->num_samples_read_ = num_samples_read;
+
+  auto first_sample = last_read_sample_;
+  last_read_sample_ =
+      (last_read_sample_ + num_samples_read) % number_of_samples_internal();
+
+  if (!use_read_cv_) {
+    // If we don't wait for the condition variable we can read any number of
+    // samples between 0 and NumberOfSamples() (This is including all the
+    // microphones).
+    if (num_samples_read >= kMicarrayBufferSize) {
+      // If we have read more samples than the maximum buffer size return the
+      // whole buffer.
+      read_samples_ = raw_data_;
+      num_samples_read = kMicarrayBufferSize;
+    } else if (num_samples_read == 0) {
+      // If we haven't read anything return an empty array.
+      read_samples_ = std::valarray<int16_t>{};
+    } else {
+      // In all other cases return an array with the new samples.
+      read_samples_.resize(num_samples_read);
+      size_t j = 0;
+      for (size_t i = first_sample; i <= last_read_sample_;
+           i = ((i + 1) % number_of_samples_internal())) {
+        auto _sample = std::lround(std::floor(i / kMicrophoneChannels));
+        auto _channel = std::lround(std::floor(i % kMicrophoneChannels));
+        read_samples_[j] = raw_data_internal(_sample, _channel);
+        j++;
+      }
+    }
+  }
 
   std::cerr << "In READ reading " << sizeof(int16_t) * kMicarrayBufferSize
             << " bytes " << " to a buffer of int_16_t with size "
@@ -108,7 +152,11 @@ bool MicrophoneArray::Read() {
       beamformed_[s] = std::min(INT16_MAX, std::max(sum, INT16_MIN));
     }
   }
-  return true;
+  if (use_read_cv_) {
+    return NumberOfSamples();
+  } else {
+    return num_samples_read;
+  }
 }
 
 // Setting fifos for the 'delay & sum' algorithm
