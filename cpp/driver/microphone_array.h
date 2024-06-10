@@ -83,7 +83,7 @@ private:
   uint32_t sampling_frequency_;
   bool enable_beamforming_;
 
-  const uint16_t kMicarrayBufferSize{8 * 8};
+  uint16_t kMicarrayBufferSize{512 * 8};
   const uint16_t kMicrophoneArrayIRQ{22}; // GPIO06 - WiringPi:22
   const uint16_t kMicrophoneChannels{8};
 
