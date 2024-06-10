@@ -41,7 +41,7 @@ int main() {
   int gain = -1;
 
   // Create MicrophoneArray object
-  matrix_hal::MicrophoneArray microphone_array{false, 64};
+  matrix_hal::MicrophoneArray microphone_array{false, 512, false};
   // Set microphone_array to use MatrixIOBus bus
   microphone_array.Setup(&bus);
   // Set microphone sampling rate
