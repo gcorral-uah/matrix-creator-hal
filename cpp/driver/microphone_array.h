@@ -89,6 +89,13 @@ private:
 
   // beamforming delay and sum support
   std::valarray<CircularQueue<int16_t>> fifos_;
+
+  int16_t &raw_data_internal(int16_t sample, int16_t channel) {
+    return raw_data_[channel * number_of_samples_internal() + sample];
+  }
+  uint32_t number_of_samples_internal() {
+    return kMicarrayBufferSize / kMicrophoneChannels;
+  }
 };
 }; // namespace matrix_hal
 #endif // CPP_DRIVER_MICROPHONE_ARRAY_H_
