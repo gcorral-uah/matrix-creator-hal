@@ -136,7 +136,7 @@ size_t MicrophoneArray::Read() {
 
   std::cerr << "In READ reading " << sizeof(int16_t) * kMicarrayBufferSize
             << " bytes " << " to a buffer of int_16_t with size "
-            << raw_data_.size() << " took " << delta_t << "ms" << std::endl;
+            << raw_data_.size() << " took " << delta_t << "ns" << std::endl;
 
   if (enable_beamforming_) {
     for (uint32_t s = 0; s < NumberOfSamples(); s++) {
