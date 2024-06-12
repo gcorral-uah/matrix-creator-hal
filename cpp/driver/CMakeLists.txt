@@ -1,7 +1,8 @@
 project(matrix_creator_hal C CXX)
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 find_library (FFTW_LIBRARIES NAMES fftw3f )
 FIND_LIBRARY(WIRINGPI_LIB NAMES wiringPi)
