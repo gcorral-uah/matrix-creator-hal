@@ -70,15 +70,17 @@ int main() {
     loop_counter++;
 
     // Read microphone stream data
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
 
     microphone_array.Read();
 
-    auto stop = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> diferencia_tiempo = stop - start;
+    // auto stop = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> diferencia_tiempo = stop -
+    // start;
 
-    float Ts = static_cast<float>(diferencia_tiempo.count());
-    std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds" << std::endl;
+    // float Ts = static_cast<float>(diferencia_tiempo.count());
+    // std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds" <<
+    // std::endl;
 
     // For each microphone
 
