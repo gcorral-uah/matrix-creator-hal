@@ -99,11 +99,11 @@ int main() {
     std::cout << "Tiempo escritura en array: " << Ts_1 << " miliseconds "
               << " for " << microphone_array.NumberOfSamples() << " samples "
               << std::endl;
-    auto buf = std::vector<int16_t>{};
-    buf.assign(&buffer[0][0], &buffer[microphone_array.Channels()]
-                                     [(microphone_array.SamplingRate() +
-                                       microphone_array.NumberOfSamples())]);
-    std::cerr << buf.size() << std::endl;
+    // auto buf = std::vector<int16_t>{};
+    // buf.assign(&buffer[0][0], &buffer[microphone_array.Channels()]
+    //                                  [(microphone_array.SamplingRate() +
+    //                                    microphone_array.NumberOfSamples())]);
+    // std::cerr << buf.size() << std::endl;
   }
 
   return 0;
