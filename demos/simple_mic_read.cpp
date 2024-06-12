@@ -70,21 +70,19 @@ int main() {
     loop_counter++;
 
     // Read microphone stream data
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     microphone_array.Read();
 
-    // auto stop = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double, std::milli> diferencia_tiempo = stop -
-    // start;
+    auto stop = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> diferencia_tiempo = stop - start;
 
-    // float Ts = static_cast<float>(diferencia_tiempo.count());
-    // std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds" <<
-    // std::endl;
+    float Ts = static_cast<float>(diferencia_tiempo.count());
+    std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds" << std::endl;
 
     // For each microphone
 
-    // auto start1 = std::chrono::high_resolution_clock::now();
+    auto start1 = std::chrono::high_resolution_clock::now();
 
     for (size_t c = 0; c < microphone_array.Channels(); c++) {
       std::cerr << "Writing in loop " << loop_counter << " to mic " << c
@@ -95,17 +93,17 @@ int main() {
       }
     }
 
-    // auto stop1 = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double, std::milli> dif_tiempo1 = stop1 - start1;
-    // float Ts_1 = static_cast<float>(dif_tiempo1.count());
-    // std::cout << "Tiempo escritura en array: " << Ts_1 << " miliseconds "
-    //           << " for " << microphone_array.NumberOfSamples() << " samples "
-    //           << std::endl;
-    // auto buf = std::vector<int16_t>{};
-    // buf.assign(&buffer[0][0], &buffer[microphone_array.Channels()]
-    //                                  [(microphone_array.SamplingRate() +
-    //                                    microphone_array.NumberOfSamples())]);
-    // std::cerr << buf.size() << std::endl;
+    auto stop1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> dif_tiempo1 = stop1 - start1;
+    float Ts_1 = static_cast<float>(dif_tiempo1.count());
+    std::cout << "Tiempo escritura en array: " << Ts_1 << " miliseconds "
+              << " for " << microphone_array.NumberOfSamples() << " samples "
+              << std::endl;
+    auto buf = std::vector<int16_t>{};
+    buf.assign(&buffer[0][0], &buffer[microphone_array.Channels()]
+                                     [(microphone_array.SamplingRate() +
+                                       microphone_array.NumberOfSamples())]);
+    std::cerr << buf.size() << std::endl;
   }
 
   return 0;
