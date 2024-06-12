@@ -98,7 +98,7 @@ private:
   bool use_read_cv_;
   size_t last_read_sample_{0};
   bool first_read_{false};
-  std::valarray<int16_t> read_samples_{};
+  std::valarray<int16_t> read_samples_;
   uint32_t num_samples_read_{0};
 
   uint16_t kMicarrayBufferSize{512 * 8};
