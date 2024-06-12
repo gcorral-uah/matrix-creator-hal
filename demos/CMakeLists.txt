@@ -1,6 +1,7 @@
 project(malos_service C CXX)
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_BUILD_TYPE Debug)
 add_definitions(-std=c++11)
 
 # Enable extra warnings. Not needed.
