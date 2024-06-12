@@ -94,7 +94,7 @@ size_t MicrophoneArray::Read() {
   auto delta_t = static_cast<double>(dif_time.count());
   auto num_samples_read_all_mics =
       std::lround(std::floor(delta_t * 10e-9 * sampling_frequency_));
-  assert(num_samples_read >= 0);
+  assert(num_samples_read_all_mics >= 0);
   // Ensure that all the channels have new samples.
   // TODO: This can be done without a loop with a mod operation, but right now
   // this is simpler. This makes at most 7 iterations.
