@@ -55,7 +55,9 @@ public:
   void ShowConfiguration();
   uint16_t Channels() { return kMicrophoneChannels; }
   uint32_t NumberOfSamples() {
-    if (use_read_cv_) {
+    // If we have not read any samples, return the maximum possible buffer size
+    // (as it's used to preallocate a buffer in the examples)
+    if (use_read_cv_ || !first_read_) {
       return kMicarrayBufferSize / kMicrophoneChannels;
     } else {
       return std::lround(std::floor(num_samples_read_ / kMicrophoneChannels));
@@ -95,8 +97,9 @@ private:
   bool enable_beamforming_;
   bool use_read_cv_;
   size_t last_read_sample_{0};
+  bool first_read_{false};
   std::valarray<int16_t> read_samples_{};
-  uint32_t num_samples_read_;
+  uint32_t num_samples_read_{0};
 
   uint16_t kMicarrayBufferSize{512 * 8};
   const uint16_t kMicrophoneArrayIRQ{22}; // GPIO06 - WiringPi:22

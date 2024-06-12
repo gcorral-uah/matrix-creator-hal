@@ -108,6 +108,7 @@ size_t MicrophoneArray::Read() {
                       number_of_samples_internal();
 
   if (!use_read_cv_) {
+    first_read_ = true;
     // If we don't wait for the condition variable we can read any number of
     // samples between 0 and NumberOfSamples() (This is including all the
     // microphones).
