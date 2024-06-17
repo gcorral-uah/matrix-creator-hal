@@ -6,6 +6,7 @@
 // System calls
 #include <unistd.h>
 // Input/output streams and functions
+#include <fstream>
 #include <iostream>
 
 // Communicates with MATRIX device
@@ -28,7 +29,7 @@
 
 int main() {
 
-  uint64_t loop_counter = 0;
+  const int seconds_to_record = 3;
 
   // Create MatrixIOBus object for hardware communication
   matrix_hal::MatrixIOBus bus;
@@ -64,47 +65,67 @@ int main() {
   int16_t buffer[microphone_array.Channels()]
                 [microphone_array.SamplingRate() +
                  microphone_array.NumberOfSamples()];
-
-  // For ensuring there are no hangs
-  while (true) {
-    loop_counter++;
-
-    // Read microphone stream data
-    auto start = std::chrono::high_resolution_clock::now();
-
-    microphone_array.Read();
-
-    auto stop = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> diferencia_tiempo = stop - start;
-
-    float Ts = static_cast<float>(diferencia_tiempo.count());
-    std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds" << std::endl;
-
-    // For each microphone
-
-    auto start1 = std::chrono::high_resolution_clock::now();
-
-    for (size_t c = 0; c < microphone_array.Channels(); c++) {
-      std::cerr << "Writing in loop " << loop_counter << " to mic " << c
-                << std::endl;
-      // For number of samples
-      for (size_t s = 0; s < microphone_array.NumberOfSamples(); s++) {
-        buffer[c][s] = microphone_array.At(s, c);
-      }
-    }
-
-    auto stop1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> dif_tiempo1 = stop1 - start1;
-    float Ts_1 = static_cast<float>(dif_tiempo1.count());
-    std::cout << "Tiempo escritura en array: " << Ts_1 << " miliseconds "
-              << " for " << microphone_array.NumberOfSamples() << " samples "
-              << std::endl;
-    // auto buf = std::vector<int16_t>{};
-    // buf.assign(&buffer[0][0], &buffer[microphone_array.Channels()]
-    //                                  [(microphone_array.SamplingRate() +
-    //                                    microphone_array.NumberOfSamples())]);
-    // std::cerr << buf.size() << std::endl;
+  // Create an array of streams to write microphone data to files
+  std::ofstream os[microphone_array.Channels()];
+  // For each microphone channel (+1 for beamforming), make a file and open it
+  for (uint16_t c = 0; c < microphone_array.Channels(); c++) {
+    // Set filename for microphone output
+    std::string filename = "mic_" +
+                           std::to_string(microphone_array.SamplingRate()) +
+                           "_s16le_channel_" + std::to_string(c) + ".raw";
+    // Create and open file
+    os[c].open(filename, std::ofstream::binary);
   }
 
+  // Counter variable for tracking recording time
+  uint32_t samples = 0;
+  // For recording duration
+  for (int s = 0; s < seconds_to_record; s++) {
+    // Endless loop
+    while (true) {
+      // Read microphone stream data
+      auto start = std::chrono::high_resolution_clock::now();
+      // Read microphone stream data
+      microphone_array.Read();
+      auto stop = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double, std::milli> diferencia_tiempo =
+          stop - start;
+      float Ts = static_cast<float>(diferencia_tiempo.count());
+      std::cout << "Tiempo de lectura MIC: " << Ts << " miliseconds"
+                << std::endl;
+
+      auto start1 = std::chrono::high_resolution_clock::now();
+      // For number of samples
+      for (uint32_t s = 0; s < microphone_array.NumberOfSamples(); s++) {
+        // For each microphone
+        for (uint16_t c = 0; c < microphone_array.Channels(); c++) {
+          // Send microphone data to buffer
+          buffer[c][samples] = microphone_array.At(s, c);
+        }
+        // Increment samples for buffer write
+        samples++;
+      }
+      auto stop1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double, std::milli> dif_tiempo1 = stop1 - start1;
+      float Ts_1 = static_cast<float>(dif_tiempo1.count());
+      std::cout << "Tiempo escritura en array: " << Ts_1 << " miliseconds "
+                << " for " << microphone_array.NumberOfSamples() << " samples "
+                << std::endl;
+
+      // Write a part of the file once number of samples is >= sampling rate,
+      // (which indicates that a duration of a second at a minimum have
+      // passed).
+      if (samples >= microphone_array.SamplingRate()) {
+        // For each microphone channel
+        for (uint16_t c = 0; c < microphone_array.Channels(); c++) {
+          // Write to recording file
+          os[c].write((const char *)buffer[c], samples * sizeof(int16_t));
+        }
+        // Set samples to zero for loop to fill buffer
+        samples = 0;
+        break;
+      }
+    }
+  }
   return 0;
 }
