@@ -55,6 +55,8 @@ public:
   void ShowConfiguration();
   uint16_t Channels() { return kMicrophoneChannels; }
   uint32_t NumberOfSamples() {
+    // This function returns the number of samples read per channel.
+
     // If we have not read any samples, return the maximum possible buffer size
     // (as it's used to preallocate a buffer in the examples)
     if (use_read_cv_ || !first_read_) {
@@ -67,6 +69,8 @@ public:
   int16_t &Raw(int16_t sample, int16_t channel) {
     if (use_read_cv_) {
       return raw_data_[channel * number_of_samples_internal() + sample];
+    } else if (!use_read_cv_ && num_samples_read_ == kMicarrayBufferSize) {
+      return read_samples_[channel * number_of_samples_internal() + sample];
     } else {
       return read_samples_[sample * kMicrophoneChannels + channel];
     }
@@ -99,6 +103,7 @@ private:
   size_t last_read_sample_{0};
   bool first_read_{false};
   std::valarray<int16_t> read_samples_;
+  // Total number of samples read (all channels, not per channel)
   uint32_t num_samples_read_{0};
 
   uint16_t kMicarrayBufferSize{512 * 8};

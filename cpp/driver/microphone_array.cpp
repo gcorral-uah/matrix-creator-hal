@@ -116,7 +116,7 @@ size_t MicrophoneArray::Read() {
       // If we have read more samples than the maximum buffer size return the
       // whole buffer.
       read_samples_ = raw_data_;
-      num_samples_read_all_mics = kMicarrayBufferSize;
+      num_samples_read_ = kMicarrayBufferSize;
     } else if (num_samples_read_all_mics == 0) {
       // If we haven't read anything return an empty array.
       read_samples_ = std::valarray<int16_t>{};
