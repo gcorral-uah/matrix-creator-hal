@@ -34,8 +34,14 @@ int main() {
   // Create MatrixIOBus object for hardware communication
   matrix_hal::MatrixIOBus bus;
   // Initialize bus and exit program if error occurs
-  if (!bus.Init())
+  if (!bus.Init()) {
     return 1;
+  }
+
+  if (!bus.IsDirectBus()) {
+    std::cerr << "Using alsa bus" << std::endl;
+    return 1;
+  }
 
   // Set user flags from gflags as variables
   int sampling_rate = 96000;
