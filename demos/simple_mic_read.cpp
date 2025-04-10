@@ -40,7 +40,6 @@ int main() {
 
   if (!bus.IsDirectBus()) {
     std::cerr << "Using alsa bus" << std::endl;
-    return 1;
   }
 
   // Set user flags from gflags as variables
